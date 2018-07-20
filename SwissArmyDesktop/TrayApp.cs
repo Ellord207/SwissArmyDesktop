@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 using Quartz;
 using Quartz.Impl;
@@ -28,39 +29,61 @@ namespace SwissArmyDesktop
 
         static Random r = new Random();
         NotifyIcon notifyIcon = new NotifyIcon();
-        IntPtr hWnd;
+        IntPtr m_hWnd;
 
-        static DateTime eventHorizon = new DateTime();
         public TrayApp()
             {
-            hWnd = ExternalAPIs.GetConsoleWindow();
+            m_hWnd = ExternalAPIs.GetConsoleWindow();
             Console.WriteLine("Hello from the TrayApp:{0}", Thread.CurrentThread.ManagedThreadId);
             MenuItem exitMenuItem = new MenuItem("Exit", new EventHandler(Exit));
             MenuItem KickThreadItem = new MenuItem("Race!", new EventHandler(Walk));
             MenuItem GetSpriteItem = new MenuItem("Get Sprite", new EventHandler(Get));
             MenuItem PauseItem = new MenuItem("Pause", new EventHandler(Pause));
-            MenuItem EventItem = new MenuItem("When?", new EventHandler(NextEvent));
-            //MenuItem OrderItem = new MenuItem("WindowOrder", new EventHandler(WindowOrder));
+            MenuItem OrderItem = new MenuItem("List O' Windows", new EventHandler(WindowOrder));
 
             notifyIcon.Icon = OnIcon;
             notifyIcon.ContextMenu = new ContextMenu(new MenuItem[]
-                { EventItem, PauseItem, GetSpriteItem, KickThreadItem, exitMenuItem });
+                { OrderItem, PauseItem, GetSpriteItem, KickThreadItem, exitMenuItem });
             notifyIcon.Visible = true;
 
             // and start it off
             scheduler.Start();
             SchedulerAlarm(scheduler);
+
+            //Mouse Events
+            MouseHook.Start();
+            MouseHook.MouseAction += new EventHandler(TrayApp_Click);
             }
+
+        ~TrayApp()
+            {
+            Exit(this, null);
+            }
+
+        #region Events Handlers
+        private void TrayApp_Click(object sender, EventArgs e)
+            {
+            Console.WriteLine("Left mouse click!");
+            }
+        #endregion
 
         #region Menu Options
-        private void WindowOrder(object sender, EventArgs e)
+    private void WindowOrder(object sender, EventArgs e)
             {
+            Process[] processlist = Process.GetProcesses();
 
-            }
-
-        private void NextEvent(object sender, EventArgs e)
-            {
-            MessageBox.Show("The next runner will be by at " + eventHorizon.ToShortTimeString());
+            foreach (Process process in processlist)
+                {
+                IntPtr hWnd = process.MainWindowHandle;
+                StringBuilder windowTitle = new StringBuilder(255);
+                if (hWnd != (IntPtr)null)
+                    {
+                    ExternalAPIs.GetWindowText(hWnd, windowTitle, 255);
+                    string title = windowTitle.ToString();
+                    if (!string.IsNullOrEmpty(title))
+                        Console.WriteLine("Process: {0} ID: {1} Window title: {2}", process.ProcessName, process.Id, title);
+                    }
+                }
             }
 
         void Pause(object sender, EventArgs e)
@@ -102,13 +125,15 @@ namespace SwissArmyDesktop
             try
                 {
                 i = int.Parse(Interaction.InputBox("Select a number between 1 and " + SpriteImporter.FieldCount + ".", "Select Sprite", ""));
+                SpriteImporter.SPRITE s = SpriteImporter.getByNumber(i - 1);
+                if (s == null) return;
+                ClearForm.KickWalkerThread(s);
                 }
             catch (Exception ex)
                 { return; }
-            SpriteImporter.SPRITE s = SpriteImporter.getByNumber(i - 1);
-            if (s == null) return;
-            ClearForm.KickWalkerThread(s);
-            Console.WriteLine("At the front: {0}", ExternalAPIs.BringWindowToTop(hWnd).ToString());
+
+            //Console.WriteLine("At the front: {0}", ExternalAPIs.BringWindowToTop(hWnd).ToString());
+            Console.WriteLine("At the front: {0}", ExternalAPIs.GetWindow(m_hWnd, ExternalAPIs.GW_HWNDFIRST).ToString());
             }
         #endregion
 
@@ -121,8 +146,6 @@ namespace SwissArmyDesktop
 #else
             int minutesTillEvent = r.Next(20, 70);
 #endif
-            eventHorizon = DateTime.Now.AddMinutes(minutesTillEvent);
-
             IJobDetail job = JobBuilder.Create<TrayJobs>()
                 .WithIdentity("myJob", "group1") // name "myJob", group "group1"
                 .Build();
@@ -137,6 +160,7 @@ namespace SwissArmyDesktop
             // Tell quartz to schedule the job using our trigger
             scheduler.ScheduleJob(job, trigger);
             }
+
         public class TrayJobs : IJob
             {
             static int fireCount = 0;
