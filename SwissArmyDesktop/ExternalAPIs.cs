@@ -39,7 +39,7 @@ namespace SwissArmyDesktop
         public static extern Boolean BringWindowToTop(IntPtr hWnd);
 
         [DllImport("user32.dll")]
-        static extern IntPtr GetActiveWindow();
+        public static extern IntPtr GetForegroundWindow();
 
 
         /// <summary>

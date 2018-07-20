@@ -53,6 +53,7 @@ namespace SwissArmyDesktop
             //Mouse Events
             MouseHook.Start();
             MouseHook.MouseAction += new EventHandler(TrayApp_Click);
+            notifyIcon.Disposed += new EventHandler(Exit);
             }
 
         ~TrayApp()
@@ -63,7 +64,16 @@ namespace SwissArmyDesktop
         #region Events Handlers
         private void TrayApp_Click(object sender, EventArgs e)
             {
-            Console.WriteLine("Left mouse click!");
+            MouseHook.Stop();
+            IntPtr hWnd = ExternalAPIs.GetForegroundWindow();
+            if (hWnd != null)
+                {
+                StringBuilder windowTitle = new StringBuilder(255);
+                ExternalAPIs.GetWindowText(hWnd, windowTitle, 255);
+                string title = windowTitle.ToString();
+                Console.WriteLine("Process: {0} : Window title: {1}", hWnd.ToString(), title);
+                }
+            MouseHook.Start();
             }
         #endregion
 
@@ -103,6 +113,7 @@ namespace SwissArmyDesktop
         void Exit(object sender, EventArgs e)
             {
             scheduler.Shutdown();
+            MouseHook.Stop();
             // We must manually tidy up and remove the icon before we exit.
             // Otherwise it will be left behind until the user mouses over.
             notifyIcon.Visible = false;
