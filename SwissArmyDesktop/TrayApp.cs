@@ -43,16 +43,20 @@ namespace SwissArmyDesktop
 
             notifyIcon.Icon = OnIcon;
             notifyIcon.ContextMenu = new ContextMenu(new MenuItem[]
+#if DEBUG
                 { OrderItem, PauseItem, GetSpriteItem, KickThreadItem, exitMenuItem });
+            //Events Handlers
+            MouseHook.Start();
+            MouseHook.MouseAction += new EventHandler(TrayApp_Click);
+#else
+                { PauseItem, GetSpriteItem, KickThreadItem, exitMenuItem });
+#endif
             notifyIcon.Visible = true;
 
-            // and start it off
+            // and start it
             scheduler.Start();
             SchedulerAlarm(scheduler);
 
-            //Mouse Events
-            MouseHook.Start();
-            MouseHook.MouseAction += new EventHandler(TrayApp_Click);
             notifyIcon.Disposed += new EventHandler(Exit);
             }
 
@@ -72,13 +76,15 @@ namespace SwissArmyDesktop
                 ExternalAPIs.GetWindowText(hWnd, windowTitle, 255);
                 string title = windowTitle.ToString();
                 Console.WriteLine("Process: {0} : Window title: {1}", hWnd.ToString(), title);
+                ExternalAPIs.WINDOWPLACEMENT wp = ExternalAPIs.GetPlacement(hWnd);
+                Console.WriteLine("\tRect: {0}", wp.rcNormalPosition);
                 }
             MouseHook.Start();
             }
-        #endregion
+         #endregion
 
         #region Menu Options
-    private void WindowOrder(object sender, EventArgs e)
+        private void WindowOrder(object sender, EventArgs e)
             {
             Process[] processlist = Process.GetProcesses();
 
@@ -146,7 +152,7 @@ namespace SwissArmyDesktop
             //Console.WriteLine("At the front: {0}", ExternalAPIs.BringWindowToTop(hWnd).ToString());
             Console.WriteLine("At the front: {0}", ExternalAPIs.GetWindow(m_hWnd, ExternalAPIs.GW_HWNDFIRST).ToString());
             }
-        #endregion
+#endregion
 
         #region Scheduler Methods
         private static void SchedulerAlarm(IScheduler scheduler)
@@ -187,7 +193,7 @@ namespace SwissArmyDesktop
                 ClearForm.KickWalkerThread(s);
                 }
             }
-        #endregion
+#endregion
 
         }
     }

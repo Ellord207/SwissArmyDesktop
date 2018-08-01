@@ -13,33 +13,91 @@ namespace SwissArmyDesktop
         //   This site has almost to much information
 
         [DllImport("user32.dll")]
-        public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-        public const int SW_HIDE = 0;
-        public const int SW_SHOW = 5;
+        internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        internal const int SW_HIDE = 0;
+        internal const int SW_SHOW = 5;
 
         [DllImport("kernel32.dll")]
-        public static extern IntPtr GetConsoleWindow();  // Returns a hWand
+        internal static extern IntPtr GetConsoleWindow();  // Returns a hWand
 
         [DllImport("user32.dll")]
-        public static extern IntPtr GetTopWindow(IntPtr hWnd); // Returns a hWand
+        internal static extern IntPtr GetTopWindow(IntPtr hWnd); // Returns a hWand
 
         [DllImport("user32.dll")]
-        public static extern IntPtr GetWindow(IntPtr hWnd, uint wCmd);
-        public const int GW_HWNDFIRST = 0; // The highest window in the Z-order having the same parent as the given window.
-        public const int GW_HWNDLAST = 1; // The lowest window in the Z-order having the same parent as the given window.
-        public const int GW_HWNDNEXT = 2; // The window below the given window in the Z-order.
-        public const int GW_HWNDPREV = 3; // The window above the given window in the Z-order.
-        public const int GW_OWNER = 4; //The window that owns the given window(not to be confused with the parent window).
-        public const int GW_CHILD = 5; // The topmost of the given window's child windows. This has the same effect as using the GetTopWindow function.
+        internal static extern IntPtr GetWindow(IntPtr hWnd, uint wCmd);
+        internal const int GW_HWNDFIRST = 0; // The highest window in the Z-order having the same parent as the given window.
+        internal const int GW_HWNDLAST = 1; // The lowest window in the Z-order having the same parent as the given window.
+        internal const int GW_HWNDNEXT = 2; // The window below the given window in the Z-order.
+        internal const int GW_HWNDPREV = 3; // The window above the given window in the Z-order.
+        internal const int GW_OWNER = 4; //The window that owns the given window(not to be confused with the parent window).
+        internal const int GW_CHILD = 5; // The topmost of the given window's child windows. This has the same effect as using the GetTopWindow function.
 
         [DllImport("user32.dll")]
-        public static extern Boolean SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+        internal static extern Boolean SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
         [DllImport("user32.dll")]
-        public static extern Boolean BringWindowToTop(IntPtr hWnd);
+        internal static extern Boolean BringWindowToTop(IntPtr hWnd);
 
         [DllImport("user32.dll")]
-        public static extern IntPtr GetForegroundWindow();
+        internal static extern IntPtr GetForegroundWindow();
+
+        /// <summary>
+        /// Retrieves the show state and the restored, minimized, and maximized positions of the specified window.
+        /// </summary>
+        /// <param name="hWnd">
+        /// A handle to the window.
+        /// </param>
+        /// <param name="lpwndpl">
+        /// A pointer to the WINDOWPLACEMENT structure that receives the show state and position information.
+        /// <para>
+        /// Before calling GetWindowPlacement, set the length member to sizeof(WINDOWPLACEMENT). GetWindowPlacement fails if lpwndpl-> length is not set correctly.
+        /// </para>
+        /// </param>
+        /// <returns>
+        /// If the function succeeds, the return value is nonzero.
+        /// <para>
+        /// If the function fails, the return value is zero. To get extended error information, call GetLastError.
+        /// </para>
+        /// </returns>
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetWindowPlacement(IntPtr hWnd, ref WINDOWPLACEMENT lpwndpl);
+        internal struct WINDOWPLACEMENT
+            {
+            public int length;
+            public int flags;
+            public int showCmd;
+            public System.Drawing.Point ptMinPosition;
+            public System.Drawing.Point ptMaxPosition;
+            public System.Drawing.Rectangle rcNormalPosition;
+            }
+        internal static WINDOWPLACEMENT GetPlacement(IntPtr hWnd)
+            {
+            WINDOWPLACEMENT placement = new WINDOWPLACEMENT();
+            placement.length = Marshal.SizeOf(placement);
+            GetWindowPlacement(hWnd, ref placement);
+            return placement;
+            }
+
+        //[DllImport("user32.dll")]
+        //[return: MarshalAs(UnmanagedType.Bool)]
+        //internal static extern bool GetWindowRect(HandleRef hWnd, out RECT lpRect);
+        //[StructLayout(LayoutKind.Sequential)]
+        //internal struct RECT
+        //    {
+        //    public int Left;        // x position of upper-left corner
+        //    public int Top;         // y position of upper-left corner
+        //    public int Right;       // x position of lower-right corner
+        //    public int Bottom;      // y position of lower-right corner
+        //    }
+        //internal static RECT GetRect(IntPtr hWnd)
+        //    {
+        //    RECT rect = new RECT();
+        //    new HandleRef()
+        //    GetWindowRect(hWnd, out rect);
+        //    return rect;
+        //    }
+
 
 
         /// <summary>
@@ -84,7 +142,7 @@ namespace SwissArmyDesktop
         ///     </see>
         /// </remarks>
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+        internal static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
         }
     }

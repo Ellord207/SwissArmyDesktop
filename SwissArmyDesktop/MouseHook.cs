@@ -44,7 +44,7 @@ namespace SwissArmyDesktop
         // TODO : update to choose the mouse event subscribed to.
         private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
             {
-            if (nCode >= 0 && MouseMessages.WM_LBUTTONDOWN == (MouseMessages)wParam)
+            if (nCode >= 0 && MouseMessages.WM_LBUTTONUP == (MouseMessages)wParam)
                 {
                 MSLLHOOKSTRUCT hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
                 MouseAction(null, new EventArgs());
